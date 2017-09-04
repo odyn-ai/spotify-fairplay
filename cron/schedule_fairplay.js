@@ -1,12 +1,13 @@
 const CronJob = require('cron').CronJob;
 const request = require('request-promise');
+const sleep = require('sleep');
+const { balancePlaylist } = require('../bin/fairplay');
 
 const playlistURL = 'https://api.spotify.com/v1/users/kostyan5/playlists/4EAYzS0YpAeg1MGMg87zN3';
 const currentlyPlayingURL = 'https://api.spotify.com/v1/me/player/currently-playing';
 
-new CronJob('* 1 * * * *', async () => {
-    console.log('5 seconds passed');
-
+// new CronJob('0 * * * * *',
+const t = async () => {
     // get information about the playlist
     // get the currently playing song
     const [playlist, currentSong] = await Promise.all([
@@ -14,20 +15,15 @@ new CronJob('* 1 * * * *', async () => {
         getCurrentSong()
     ]);
 
-    console.log(currentSong);
-
     // get the list of user IDs to reorder
     const names = getNamesToReorder(playlist.tracks.items, currentSong.item.id);
 
-    const currentSongLocation = playlist.tracks.items.length - names.length - 1;
-    console.log(currentSongLocation);
-    console.log(names);
+    const currentSongLocation = playlist.tracks.items.length - names.length;
+
     // send to the feature to get the new ordering
-    const newOrder = getNewOrder();
+    const newOrder = balancePlaylist(names);
 
     const mappedNewOrder = mapNewOrder(newOrder, currentSongLocation);
-
-    console.log(mappedNewOrder);
 
     // perform the ordering
     let nextToOrder = currentSongLocation;
@@ -39,11 +35,11 @@ new CronJob('* 1 * * * *', async () => {
             positionShift.insertBefore
         );
 
+        sleep.sleep(1);
         nextToOrder += 1;
     }
 
-}, null, true);
-
+};
 
 const getPlaylist = async () => {
     const options = getOptions(playlistURL);
@@ -73,7 +69,7 @@ const getNamesToReorder = (tracks, currentSongID) => {
     });
 
     return tracks
-        .filter((track, idx) => idx > currentlyPlayingIndex)
+        .filter((track, idx) => idx >= currentlyPlayingIndex)
         .map(track => track.added_by.id);
 };
 
@@ -90,10 +86,14 @@ const getNewOrder = () => {
 
 const mapNewOrder = (ordering, currentSongLocation) => {
     return ordering.map((value, idx) => ({
-        rangeStart: currentSongLocation + idx + 1,
-        insertBefore: currentSongLocation + value + 1
+        rangeStart: currentSongLocation + idx,
+        insertBefore: currentSongLocation + value
     })).sort((a, b) => {
-        return a.insertBefore > b.insertBefore;
+        if (a.insertBefore < b.insertBefore) {
+            return -1;
+        }
+
+        return a.insertBefore === b.insertBefore ? 0 : 1;
     });
 };
 
@@ -105,5 +105,8 @@ const reorderPlaylist = async (currentPosition, newPosition) => {
         insert_before: newPosition,
     };
 
+    console.log(`Current: ${currentPosition} New:${newPosition}`);
     return request.put(options);
 } ;
+
+t();
