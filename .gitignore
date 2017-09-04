@@ -1,2 +1,10 @@
+<<<<<<< HEAD
 .idea
 node_modules
+=======
+node_modules
+
+.idea
+
+.env
+>>>>>>> d3014ef... reordering and basic web UI working

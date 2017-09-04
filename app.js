@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -8,6 +10,8 @@ var sassMiddleware = require('node-sass-middleware');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
+
+require('./cron/schedule_fairplay');
 
 var app = express();
 
