@@ -170,7 +170,7 @@ router.get('/playlist', (req, res) => {
                 shuffledTracks: sortedPlaylist.tracks.items,
                 currentlyPlaying: {}
             });
-        });
+        }).catch((err) => console.error(err));
     });
 });
 

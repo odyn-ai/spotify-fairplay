@@ -53,8 +53,11 @@ let notifyPlayer = (id) => {
     getPlaylist().then((playlist) => {
         let song = _.find(playlist.tracks.items, (item) => item.track.id === id);
         let query = 'SELECT * FROM players WHERE spotify_user = $1';
-        pool.query(query, song.added_by.id, (err, res) => {
-            console.log(res);
+	pool.query(query, [song.added_by.id], (err, res) => {
+	    let songName = song.track.name;
+	    let songArtist = song.track.name;
+	    let phoneNumber = res.rows[0].phone;
+	    sendText(`Now Playing a song you added, ${songName}. Thanks a bushel!`, phoneNumber);
         });
     });
 }
