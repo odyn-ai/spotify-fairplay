@@ -1,10 +1,11 @@
 const request = require('request-promise');
 const twilio = require('twilio');
-const { Client } = require('pg');
+const { Pool, Client } = require('pg');
 const _ = require('lodash');
-const pgClient = new Client();
+const pool = new Pool();
 const twilioClient = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const currentlyPlayingURL = 'https://api.spotify.com/v1/me/player/currently-playing';
+const playlistURL = 'https://api.spotify.com/v1/users/kostyan5/playlists/4EAYzS0YpAeg1MGMg87zN3';
 
 const getCurrentSong = async () => {
     const options = getOptions(currentlyPlayingURL);
@@ -17,6 +18,11 @@ const getOptions = (url) => {
         headers: { 'Authorization': `Bearer ${process.env.API_ACCESS_TOKEN}` },
         json: true
     };
+};
+
+const getPlaylist = async () => {
+    const options = getOptions(playlistURL);
+    return request.get(options);
 };
 
 const sendText = (body, to) => {
@@ -33,12 +39,23 @@ let pollForNewSong = () => {
         if (_.isUndefined(songID)) {
             console.log('INIT SONG CHECK')
             songID = msg.item.id;
+            notifyPlayer(songID);
         } else if (songID !== msg.item.id) {
             songID = msg.item.id;
             console.log('SONG CHANGED');
             return notifyPlayer(songID);
         } else {
         }
+    });
+}
+
+let notifyPlayer = (id) => {
+    getPlaylist().then((playlist) => {
+        let song = _.find(playlist.tracks.items, (item) => item.track.id === id);
+        let query = 'SELECT * FROM players WHERE spotify_user = $1';
+        pool.query(query, song.added_by.id, (err, res) => {
+            console.log(res);
+        });
     });
 }
 
