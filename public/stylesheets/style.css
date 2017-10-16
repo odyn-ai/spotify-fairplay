@@ -9,4 +9,14 @@ a {
   background-color: #00B7FF;
   color: #FFF; }
 
+
+.fifty {
+  width: 50%;
+}
+
+.full {
+  display: inline-flex;
+  width: 100%;
+}
+
 /*# sourceMappingURL=style.css.map */

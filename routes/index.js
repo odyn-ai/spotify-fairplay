@@ -3,14 +3,17 @@ const router = express.Router();
 const request = require('request'); // "Request" library
 const querystring = require('querystring');
 const cookieParser = require('cookie-parser');
+const _ = require('lodash');
 
 const clientID = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
-const redirectURI = 'http://localhost:8888/callback';
+const redirectURI = 'http://localhost:3000/callback';
 const stateKey = 'spotify_auth_state';
 const accessTokenKey = 'access_token';
 const refreshTokenKey = 'refresh_token';
 const playlistURL = 'https://api.spotify.com/v1/users/kostyan5/playlists/4EAYzS0YpAeg1MGMg87zN3';
+const fairplay = require('../bin/fairplay');
+const schedule_fairplay = require('../cron/schedule_fairplay');
 
 /**
  * Generates a random string containing numbers and letters
@@ -30,7 +33,6 @@ const generateRandomString = function(length) {
 /* GET home page. */
 router.get('/', (req, res) => {
     const accessToken = req.cookies ? req.cookies[accessTokenKey] : null;
-    console.log(accessToken);
     if (false) {
         res.redirect('/playlist');
     } else {
@@ -89,6 +91,8 @@ router.get('/callback', (req, res) => {
 
                 const accessToken = body.access_token;
                 const refreshToken = body.refresh_token;
+
+                console.log(accessToken);
 
                 const options = {
                     url: playlistURL,
@@ -157,12 +161,17 @@ router.get('/playlist', (req, res) => {
         };
 
         request.get(options, (error, response, body) => {
-            console.log(playlistBody.tracks.items[0].track.artists);
+            schedule_fairplay.t(playlistBody).then((sortedPlaylist) => {
+
             res.render('playlist', {
                 title: playlistBody.name,
                 tracks: playlistBody.tracks.items,
-                currentlyPlaying: body.item
+                //shuffledTracks: fairplay.balancePlaylist(playlistBody.tracks.items),
+                shuffledTracks: sortedPlaylist.tracks.items,
+                currentlyPlaying: {}
             });
+
+            })
         });
     });
 });

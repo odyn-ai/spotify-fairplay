@@ -24,7 +24,6 @@ function shouldMoveUp(playlist, pos) {
 // playlist = queued list of users
 function balancePlaylist(playlist) {
 
-  console.log(playlist);
   let newPos = Array.apply(null, new Array(playlist.length)).map(function (x, i) { return i; });
 
   for (let i = 1; i < playlist.length; i++) {
@@ -47,7 +46,6 @@ function balancePlaylist(playlist) {
   // for (let i=0; i < origList.length; i++) {
   //   newList[newPos[i]] = (origList[i]);
   // }
-  console.log(newPos);
   return newPos;
 }
 
