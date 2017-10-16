@@ -47,12 +47,14 @@ router.post('/login', (req, res) => {
 
     // your application requests authorization
     const scope = 'playlist-read-collaborative playlist-modify-private playlist-modify-public user-read-currently-playing';
+    
+    const redirect_uri = req.headers.referer + 'callback';
 
     const queryString = querystring.stringify({
         response_type: 'code',
         client_id: clientID,
         scope: scope,
-        redirect_uri: redirectURI,
+        redirect_uri,
         state: state
     });
     res.redirect(`https://accounts.spotify.com/authorize?${queryString}`);
@@ -77,7 +79,7 @@ router.get('/callback', (req, res) => {
             url: 'https://accounts.spotify.com/api/token',
             form: {
                 code: code,
-                redirect_uri: redirectURI,
+                redirect_uri: req.headers.referer + 'callback',
                 grant_type: 'authorization_code'
             },
             headers: {
@@ -106,6 +108,7 @@ router.get('/callback', (req, res) => {
                 res.cookie(refreshTokenKey, refreshToken);
                 res.redirect('/playlist');
             } else {
+		console.log(error,body, response.statusCode);
                 let queryString = querystring.stringify({
                     error: 'invalid_token'
                 });
@@ -153,26 +156,16 @@ router.get('/playlist', (req, res) => {
 
     // use the access token to access the Spotify Web API
     request.get(options, function(error, response, playlistBody) {
-        // get users currently playing song
-        const options = {
-            url: 'https://api.spotify.com/v1/me/player/currently-playing',
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-            json: true
-        };
 
-        request.get(options, (error, response, body) => {
-            schedule_fairplay.t(playlistBody).then((sortedPlaylist) => {
+		schedule_fairplay.t(playlistBody).then((sortedPlaylist) => {
 
-            res.render('playlist', {
-                title: playlistBody.name,
-                tracks: playlistBody.tracks.items,
-                //shuffledTracks: fairplay.balancePlaylist(playlistBody.tracks.items),
-                shuffledTracks: sortedPlaylist.tracks.items,
-                currentlyPlaying: {}
-            });
-
-            })
-        });
+			res.render('playlist', {
+				title: playlistBody.name,
+				tracks: playlistBody.tracks.items,
+				shuffledTracks: sortedPlaylist.tracks.items,
+				currentlyPlaying: {}
+			});
+		});
     });
 });
 
