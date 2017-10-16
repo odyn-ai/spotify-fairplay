@@ -14,6 +14,11 @@ const refreshTokenKey = 'refresh_token';
 const playlistURL = 'https://api.spotify.com/v1/users/kostyan5/playlists/4EAYzS0YpAeg1MGMg87zN3';
 const fairplay = require('../bin/fairplay');
 const schedule_fairplay = require('../cron/schedule_fairplay');
+const notify_players = require('../cron/notify_players');
+
+const twilio = require('twilio');
+const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
 
 /**
  * Generates a random string containing numbers and letters
@@ -157,15 +162,15 @@ router.get('/playlist', (req, res) => {
     // use the access token to access the Spotify Web API
     request.get(options, function(error, response, playlistBody) {
 
-		schedule_fairplay.t(playlistBody).then((sortedPlaylist) => {
+        schedule_fairplay.t(playlistBody).then((sortedPlaylist) => {
 
-			res.render('playlist', {
-				title: playlistBody.name,
-				tracks: playlistBody.tracks.items,
-				shuffledTracks: sortedPlaylist.tracks.items,
-				currentlyPlaying: {}
-			});
-		});
+            res.render('playlist', {
+                title: playlistBody.name,
+                tracks: playlistBody.tracks.items,
+                shuffledTracks: sortedPlaylist.tracks.items,
+                currentlyPlaying: {}
+            });
+        });
     });
 });
 
