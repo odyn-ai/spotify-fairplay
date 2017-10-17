@@ -1,8 +1,15 @@
 extends layout
 
 block content
-    h1= title
-    h4= `Currently Playing: ${currentlyPlaying.name} by ${currentlyPlaying.artists[0].name}`
-    each val in tracks
-        #track(class=val.track.id === currentlyPlaying.id ? 'active' : '')
-            =`${val.track.name} by ${val.track.artists[0].name} - added by ${val.added_by.id}`
+    .full
+      .fifty
+        h1= title
+        each val in tracks
+            #track
+                =`${val.track.name} by ${val.track.artists[0].name} - added by ${val.added_by.id}`
+
+      .fifty
+        h1 Balanced Queue
+        each val in shuffledTracks
+            #track
+                =`${val.track.name} by ${val.track.artists[0].name} - added by ${val.added_by.id}`
